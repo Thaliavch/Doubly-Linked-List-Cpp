@@ -12,11 +12,20 @@
      * @return Node*
      */
     DoublyLinkedList::Node * DoublyLinkedList::GetNewNode(int data){
-        Node* newNode = new Node();
-        newNode->data = data;
-        newNode->prev = nullptr;
-        newNode->next = nullptr;
+        Node* newNode = new Node{data, nullptr, nullptr};
         return newNode;
+    }
+    /**
+     * We traverse the list to find the Node in the given index
+     * @param index
+     * @return
+     */
+    DoublyLinkedList::Node * DoublyLinkedList::NodeByIndex(int index){
+        Node *temp = head;
+        for (int i = 0; i < index; i++) {  // traversing until we arrive at the index
+            temp = temp->next;
+        }
+        return temp;
     }
 
     //Public Member Functions
@@ -26,8 +35,12 @@
  */
 DoublyLinkedList::DoublyLinkedList(){
         head = nullptr;
+        tail = nullptr;
         count = 0;
     }
+DoublyLinkedList::~DoublyLinkedList(){ //ask professor why we need to do this
+    makeEmpty();
+}
 
     /**
      * Description: Insert element at the beginning of the list.
@@ -38,6 +51,8 @@ DoublyLinkedList::DoublyLinkedList(){
         if (head){
             head->prev = temp;
             temp->next = head;
+        } else {
+            tail = temp;
         }
         head = temp;
         count++;
@@ -47,21 +62,15 @@ DoublyLinkedList::DoublyLinkedList(){
      * Description: Insert element at the end of the list
      * @param int
      */
-    void DoublyLinkedList::insertRear( int data ){
-        Node *temp; //
-        Node *pNode = head;
-        if(!head){
-            pNode = GetNewNode(data);
-            head = pNode;
-        }else {
-            while (pNode) {
-                temp = pNode;
-                pNode = pNode->next;
-            }
-            pNode = GetNewNode(data);
-            temp->next = pNode;
-            pNode->prev = temp;
+    void DoublyLinkedList::insertRear( int data ) {
+        Node *temp = GetNewNode(data);
+        if (tail) {
+            tail->next = temp;
+            temp->prev = tail;
+        } else {
+            head = temp;
         }
+        tail = temp;
         count++;
     }
 
@@ -76,9 +85,11 @@ DoublyLinkedList::DoublyLinkedList(){
             Node *temp = head->next;
             delete head;
             head = temp;
+            if(count == 1){
+                tail = temp;
+            }
             count--;
             return deleted_data;
-
         }
         return -1;
     }
@@ -90,18 +101,18 @@ DoublyLinkedList::DoublyLinkedList(){
      * of the while loop.
      * @return int
      */
-    int DoublyLinkedList::removeRearInt(){
-        if(head) {
-            int deleted_data = head->data;
-            Node *pNode = head;
-            Node *temp = nullptr;
-            while (pNode) {
-                temp = pNode;
-                pNode = pNode->next;
+    int DoublyLinkedList::removeRearInt() {
+        Node *temp;
+        if (tail) {
+            int deleted_data = tail->data;
+            temp = tail->prev;  // ****** may cause problem !!!!!!!!!!!!!!!!!!!!!!!
+            if (count != 1) {
+                temp->next = tail->next;
+            } else {
+                head = temp;
             }
-            pNode = temp->prev;
-            pNode->next = nullptr;
-            delete temp;
+            delete tail;
+            tail = temp;
             count--;
             return deleted_data;
         }
@@ -155,27 +166,24 @@ DoublyLinkedList::DoublyLinkedList(){
      * @return bool
      */
     bool DoublyLinkedList::insertAt( int data, int index ){
-        Node *pNode = GetNewNode(data);
-        Node *temp = head;
 
-        if(index <  count ){
-            for(int i = 0; i < index; i++) {
-                temp = temp->next;
-            }
-            pNode->next = temp; // linking pNode front to temp ;
-            pNode->prev = temp->prev; // linking pNode back to the previous node
-            temp->prev = pNode; // linking temp back to pNode;
-            temp = pNode->prev; //setting pointer temp to point at the node that goes before pNode
-            if(index) {
+        if(index >= count){ //if index does not exist return false
+            return false;
+        } else { // if index does exist ->
+            if (!index) { // if it is 0, call insertFront function
+                insertFront(data);
+            }else{ // if index exists and it is not zero, then ->
+                Node *pNode = GetNewNode(data);
+                Node *temp = NodeByIndex(index);
+                pNode->next = temp; // linking pNode front to temp ;
+                pNode->prev = temp->prev; // linking pNode back to the previous node
+                temp->prev = pNode; // linking temp back to pNode;
+                temp = pNode->prev; //setting pointer temp to point at the node that goes before pNode
                 temp->next = pNode; // linking the front of the previous node to pNode;
-            }
-            count ++;
-            if(!index){
-                head = pNode;
+                count++;
+
             }
             return true;
-        }else{
-            return false;
         }
     }
 
@@ -187,32 +195,23 @@ DoublyLinkedList::DoublyLinkedList(){
     * @return int
     */
     int DoublyLinkedList::removeAt(int index){
-        int deleted_value;
-        Node *temp = head;
-        Node *pNode;
         if (index < count){
-            for (int i = 0; i < index; i++){
-                temp = temp->next;
-            }
-            deleted_value = temp->data;
-
-
-            if(index){ // if index is not 0
+            if(!index){ //if index is 0
+                removeFrontInt();
+            }else if (index == count-1){ //if index is the last on the list
+                removeRearInt();
+            } else {
+                Node *pNode = nullptr;
+                Node *temp = NodeByIndex(index);
+                int deleted_value = temp->data;
                 pNode = temp->prev; // pNode is now pointing to the previous node;
                 pNode->next = temp->next; // now we link the previous node to the one in front of temp
-            }
-            if(index != (count-1)) // if the user is not accessing the last element of the list
-            {
                 pNode = temp->next; // since we do not have a previous node we just update the prev property of the next node
                 pNode->prev = temp->prev; // basically pNode->prev to nullptr if index is 0;
-
+                delete temp; //now we delete the node temp is pointing to.
+                count--;
+                return deleted_value;
             }
-            if (!index){ // if index is 0
-                head = pNode; //  we now update the head pointer to point to the new head of the list
-            }
-            delete temp; //now we delete the node temp is pointing to.
-            count--;
-            return deleted_value;
         } else {
             return -1;
         }
