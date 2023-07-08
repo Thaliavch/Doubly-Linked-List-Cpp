@@ -5,6 +5,8 @@
 #ifndef LINKED_LISTS_DOUBLYLINKEDLIST_H
 #define LINKED_LISTS_DOUBLYLINKEDLIST_H
 
+// New updates, will create a tail node that will be allways updated to point to the tail, and
+// a private member function to traverse throught the list.
 
 class DoublyLinkedList{
 
@@ -16,13 +18,16 @@ private:
     };
 
     Node *head;
+    Node *tail;
     int count;
     // Private member functions
     Node* GetNewNode(int data);
+    Node* NodeByIndex(int index);
 
 public:
     //Constructor
     DoublyLinkedList();
+    ~DoublyLinkedList();
 
     // Public Member Functions
     void insertFront( int data );
@@ -39,3 +44,4 @@ public:
 
 
 #endif //LINKED_LISTS_DOUBLYLINKEDLIST_H
+
